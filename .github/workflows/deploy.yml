@@ -1,15 +1,6 @@
-name: FarmSabi CI/CD
-on: [push]
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Install deps
-      run: pip install -r requirements.txt
-    - name: HF Deploy
-      env:
-        HF_TOKEN: ${{ secrets.HF_TOKEN }}
-      run: |
-        pip install huggingface_hub
-        huggingface-cli upload . yourname/farmsabi --token $HF_TOKEN
+- name: HF Deploy
+  env:
+    HF_TOKEN: ${{ secrets.HF_TOKEN }}
+  run: |
+    pip install huggingface_hub
+    python -c "from huggingface_hub import upload_folder; upload_folder(folder_path='.', path_in_repo='', repo_id='unique2504/farmsabi', token='$HF_TOKEN')"
