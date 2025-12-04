@@ -1,0 +1,7 @@
+torch
+pillow
+streamlit
+fastapi
+uvicorn
+pytorch-lightning
+huggingface_hub

@@ -1,0 +1,15 @@
+name: FarmSabi CI/CD
+on: [push]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install deps
+      run: pip install -r requirements.txt
+    - name: HF Deploy
+      env:
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      run: |
+        pip install huggingface_hub
+        huggingface-cli upload . yourname/farmsabi --token $HF_TOKEN
