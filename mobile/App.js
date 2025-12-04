@@ -1,97 +1,114 @@
-import React, { useState } from 'react';
-import { View, Text, Button, Image, StyleSheet, ScrollView } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import React, { useState } from "react";
+import { View, Text, Button, Image, StyleSheet, ScrollView, TextInput } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 
 export default function App() {
   const [image, setImage] = useState(null);
-  const [diseaseResult, setDiseaseResult] = useState('');
+  const [disease, setDisease] = useState("");
+  const [fertilizer, setFertilizer] = useState({});
+  const [weather, setWeather] = useState({});
+  const [calendar, setCalendar] = useState({});
+  const [market, setMarket] = useState({});
+  const [cropType, setCropType] = useState("Maize");
 
-  // Pick an image from gallery
+  const backendUrl = "http://YOUR_BACKEND_URL"; // Replace with actual FastAPI URL
+
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      quality: 1,
+      quality: 1
     });
-
     if (!result.cancelled) {
       setImage(result.uri);
-      detectDisease(result.uri);
+      uploadImage(result);
     }
   };
 
-  // Dummy disease detection function
-  const detectDisease = (uri) => {
-    // TODO: Replace with real ML model inference
-    setDiseaseResult('Healthy (Demo Model)');
+  const uploadImage = async (img) => {
+    const formData = new FormData();
+    formData.append("file", {
+      uri: img,
+      name: "leaf.jpg",
+      type: "image/jpeg"
+    });
+
+    const res = await fetch(`${backendUrl}/disease`, {
+      method: "POST",
+      body: formData,
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    });
+    const data = await res.json();
+    setDisease(data.disease);
+    fetchOtherFeatures();
+  };
+
+  const fetchOtherFeatures = async () => {
+    const fertRes = await fetch(`${backendUrl}/fertilizer?crop_type=${cropType}&land_fertility=70`);
+    setFertilizer(await fertRes.json());
+
+    const weatherRes = await fetch(`${backendUrl}/weather?location=Lagos`);
+    setWeather(await weatherRes.json());
+
+    const calRes = await fetch(`${backendUrl}/crop_calendar?crop_type=${cropType}`);
+    setCalendar(await calRes.json());
+
+    const marketRes = await fetch(`${backendUrl}/market?crop_type=${cropType}&expected_yield_kg=100`);
+    setMarket(await marketRes.json());
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>🌾 FarmSabi Mobile App</Text>
 
+      <Text>Crop Type:</Text>
+      <TextInput style={styles.input} value={cropType} onChangeText={setCropType} />
+
       <Button title="Pick Leaf Image" onPress={pickImage} />
 
       {image && <Image source={{ uri: image }} style={styles.image} />}
 
-      {diseaseResult ? (
-        <Text style={styles.result}>Disease Detection Result: {diseaseResult}</Text>
-      ) : null}
+      {disease ? <Text>Disease: {disease}</Text> : null}
 
-      <View style={styles.infoBox}>
-        <Text style={styles.infoTitle}>Weather Info:</Text>
-        <Text>Temperature: 28°C</Text>
-        <Text>Rainfall: 5mm</Text>
-        <Text>Humidity: 75%</Text>
-      </View>
+      {fertilizer.N && (
+        <View style={styles.box}>
+          <Text>Fertilizer Recommendation:</Text>
+          <Text>N: {fertilizer.N} P: {fertilizer.P} K: {fertilizer.K}</Text>
+          <Text>{fertilizer.notes}</Text>
+        </View>
+      )}
 
-      <View style={styles.infoBox}>
-        <Text style={styles.infoTitle}>Fertilizer Recommendation:</Text>
-        <Text>N: 50kg/ha, P: 30kg/ha, K: 20kg/ha</Text>
-      </View>
+      {weather.temperature && (
+        <View style={styles.box}>
+          <Text>Weather in Lagos:</Text>
+          <Text>Temp: {weather.temperature}°C, Humidity: {weather.humidity}%, Rainfall: {weather.rainfall}mm</Text>
+        </View>
+      )}
 
-      <View style={styles.infoBox}>
-        <Text style={styles.infoTitle}>Planting & Harvest Dates:</Text>
-        <Text>Best Planting Date: 10 Dec 2025</Text>
-        <Text>Expected Harvest: 20 Mar 2026</Text>
-      </View>
+      {calendar.best_planting_date && (
+        <View style={styles.box}>
+          <Text>Crop Calendar:</Text>
+          <Text>Planting: {calendar.best_planting_date}</Text>
+          <Text>Harvest: {calendar.expected_harvest_date}</Text>
+        </View>
+      )}
+
+      {market.current_price && (
+        <View style={styles.box}>
+          <Text>Market Report:</Text>
+          <Text>Price: {market.current_price} NGN/kg, Expected Revenue: {market.expected_revenue} NGN</Text>
+        </View>
+      )}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    padding: 20,
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 20,
-    color: '#330033',
-    fontWeight: 'bold',
-  },
-  image: {
-    width: 250,
-    height: 250,
-    marginVertical: 20,
-    borderRadius: 10,
-  },
-  result: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 20,
-  },
-  infoBox: {
-    width: '100%',
-    padding: 15,
-    marginVertical: 10,
-    backgroundColor: '#f2f2f2',
-    borderRadius: 8,
-  },
-  infoTitle: {
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
+  container: { flexGrow: 1, padding: 20, backgroundColor: "#fff", alignItems: "center" },
+  title: { fontSize: 24, fontWeight: "bold", color: "#330033", marginBottom: 20 },
+  image: { width: 250, height: 250, marginVertical: 20, borderRadius: 10 },
+  box: { width: "100%", padding: 10, marginVertical: 10, backgroundColor: "#f2f2f2", borderRadius: 8 },
+  input: { borderWidth: 1, borderColor: "#ccc", padding: 5, width: "100%", marginBottom: 10, borderRadius: 5 }
 });
