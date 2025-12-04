@@ -1,18 +1,37 @@
-- name: Deploy to Hugging Face
-  env:
-    HF_TOKEN: ${{ secrets.HF_TOKEN }}
-  run: |
-    import os
-    from huggingface_hub import upload_folder
+name: CI/CD Pipeline 🚀 # <-- File starts with a key-value pair, NOT a '-'
 
-    token = os.getenv("HF_TOKEN")
-    folders_to_upload = ['api', 'models', 'mobile', 'training', 'requirements.txt', 'main.py', 'README.md']
+on:
+  push:
+    branches:
+      - main
 
-    for folder in folders_to_upload:
-        upload_folder(
-            folder_path=folder,
-            path_in_repo=folder,
-            repo_id='unique2504/farmsabi',
-            token=token
-        )
-        print(f"Uploaded {folder} successfully!")
+jobs: # <-- The 'jobs' map starts here
+  deploy: # <-- A job named 'deploy'
+    runs-on: ubuntu-latest
+    steps: # <-- The 'steps' list starts here
+      - uses: actions/checkout@v4 # Example step
+      - name: Set up Python # Example step
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      # V V V This is where your code snippet belongs V V V
+      - name: Deploy to Hugging Face # <-- YOUR STEP (now correctly nested)
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          import os
+          from huggingface_hub import upload_folder
+
+          token = os.getenv("HF_TOKEN")
+          folders_to_upload = ['api', 'models', 'mobile', 'training', 'requirements.txt', 'main.py', 'README.md']
+
+          for folder in folders_to_upload:
+              upload_folder(
+                  folder_path=folder,
+                  path_in_repo=folder,
+                  repo_id='unique2504/farmsabi',
+                  token=token
+              )
+              print(f"Uploaded {folder} successfully!")
+      # ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
