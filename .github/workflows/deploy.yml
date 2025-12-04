@@ -10,23 +10,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repository
-      - name: Checkout code
+      # 1️⃣ Checkout the repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # 2️⃣ Set up Python
+      # 2️⃣ Set up Python environment
       - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:
           python-version: 3.12
 
       # 3️⃣ Install dependencies
-      - name: Install dependencies
+      - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt huggingface_hub
 
-      # 4️⃣ Deploy to Hugging Face
+      # 4️⃣ Verify HF_TOKEN
+      - name: Verify Hugging Face Token
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python -c "
+import os
+from huggingface_hub import whoami
+token = os.getenv('HF_TOKEN')
+user = whoami(token=token)
+print(f'Successfully authenticated to Hugging Face as {user[\"name\"]}')"
+
+      # 5️⃣ Deploy FarmSabi to Hugging Face
       - name: Deploy to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -36,11 +48,18 @@ import os
 from huggingface_hub import upload_folder
 
 token = os.getenv('HF_TOKEN')
-upload_folder(
-    folder_path='.',                   # local folder to upload
-    path_in_repo='',                    # root of HF repo
-    repo_id='unique2504/farmsabi',     # your HF repo
-    token=token
-)
-print('Deployment to Hugging Face completed successfully!')
+
+# Only upload relevant directories
+folders_to_upload = ['api', 'models', 'mobile', 'training', 'requirements.txt', 'main.py', 'README.md']
+
+for folder in folders_to_upload:
+    upload_folder(
+        folder_path=folder,
+        path_in_repo=folder,
+        repo_id='unique2504/farmsabi',
+        token=token
+    )
+    print(f'Uploaded {folder} successfully!')
+
+print('FarmSabi deployment to Hugging Face completed successfully!')
 "
