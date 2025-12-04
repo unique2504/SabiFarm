@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile, File
-from api import disease_detector, fertilizer, weather, crop_calendar, market, irrigation
+from api import disease_detector, fertilizer, weather, crop_calendar, market,
 
 app = FastAPI(title="FarmSabi API")
 
@@ -23,10 +23,13 @@ def crop_calendar_endpoint(crop_type: str):
 def market_endpoint(crop_type: str, expected_yield_kg: float):
     return market.market_report(crop_type, expected_yield_kg)
 
+from api import irrigation
+
 @app.get("/irrigation")
 def irrigation_endpoint(crop_type: str, planting_date: str):
     # For simplicity, generate dummy weather data
     weather_history = [{"rainfall": 0}, {"rainfall": 2}, {"rainfall": 0}, {"rainfall": 1}, {"rainfall": 0}, {"rainfall": 0}, {"rainfall": 0}]
     weather_forecast = [{"rainfall": 0}, {"rainfall": 1}, {"rainfall": 0}]
     return irrigation.irrigation_alert(crop_type, planting_date, weather_history, weather_forecast)
+
 
