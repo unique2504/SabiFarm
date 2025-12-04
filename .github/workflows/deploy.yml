@@ -1,38 +1,44 @@
+name: FarmSabi CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      # 1. ADD THIS STEP: Setup Python
-      - name: Set up Python Environment
-        uses: actions/setup-python@v5
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: '3.12'
 
-      # 2. ADD THIS STEP: Install Dependencies
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install huggingface-hub
+          pip install -r requirements.txt huggingface_hub
 
-      # 3. YOUR DEPLOY STEP (Unchanged)
       - name: Deploy to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          import os
-          from huggingface_hub import upload_folder
+        run: python3 - <<EOF
+import os
+from huggingface_hub import upload_folder
 
-          token = os.getenv("HF_TOKEN")
-          folders_to_upload = ['api', 'models', 'mobile', 'training', 'requirements.txt', 'main.py', 'README.md']
+token = os.getenv("HF_TOKEN")
+folders_to_upload = ['api', 'models', 'mobile', 'training', 'requirements.txt', 'main.py', 'README.md']
 
-          for folder in folders_to_upload:
-              upload_folder(
-                  folder_path=folder,
-                  path_in_repo=folder,
-                  repo_id='unique2504/farmsabi',
-                  token=token
-              )
-              print(f"Uploaded {folder} successfully!")
+for folder in folders_to_upload:
+    upload_folder(
+        folder_path=folder,
+        path_in_repo=folder,
+        repo_id='unique2504/farmsabi',
+        token=token
+    )
+    print(f"Uploaded {folder} successfully!")
+EOF
