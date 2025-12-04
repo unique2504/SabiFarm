@@ -23,6 +23,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt huggingface_hub
 
+      - name: Verify Hugging Face Token
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: python3 - <<EOF
+import os
+from huggingface_hub import whoami
+
+token = os.getenv("HF_TOKEN")
+user = whoami(token=token)
+print(f"Authenticated as {user['name']}")
+EOF
+
       - name: Deploy to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -41,4 +53,6 @@ for folder in folders_to_upload:
         token=token
     )
     print(f"Uploaded {folder} successfully!")
+
+print("FarmSabi deployment completed successfully!")
 EOF
